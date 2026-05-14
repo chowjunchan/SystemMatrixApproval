@@ -4,7 +4,9 @@ import { supabase } from "./supabaseClient";
 export async function signInWithGoogle() {
   const { error } = await supabase.auth.signInWithOAuth({
     provider: "google",
-    options: { redirectTo: "https://system-matrix-approval.vercel.app" },
+    options: {
+      redirectTo: "https://system-matrix-approval.vercel.app",
+    },
   });
   if (error) throw error;
 }
@@ -23,7 +25,6 @@ export async function getProfile(userId) {
   return data;
 }
 
-// ── USERS ─────────────────────────────────────────────────────────────────────
 export async function getUsers() {
   const { data, error } = await supabase
     .from("profiles")
@@ -44,7 +45,6 @@ export async function updateUserRole(userId, updates) {
   return data;
 }
 
-// ── REQUESTS ──────────────────────────────────────────────────────────────────
 export async function getRequests() {
   const { data, error } = await supabase
     .from("requests")
@@ -80,15 +80,9 @@ export async function deleteRequest(id) {
   if (error) throw error;
 }
 
-// ── AUDIT LOG ─────────────────────────────────────────────────────────────────
 export async function addAudit(requestId, action, performedBy, detail) {
   await supabase.from("audit_log").insert([
-    {
-      request_id: requestId,
-      action,
-      performed_by: performedBy,
-      detail,
-    },
+    { request_id: requestId, action, performed_by: performedBy, detail },
   ]);
 }
 
@@ -102,7 +96,6 @@ export async function getAuditLog() {
   return data;
 }
 
-// ── DASHBOARD ─────────────────────────────────────────────────────────────────
 export async function getDashboardStats() {
   const { data: reqs } = await supabase
     .from("requests")
@@ -121,12 +114,10 @@ export async function getDashboardStats() {
     rejected: rows.filter((r) => r.status === "Rejected").length,
     inDev: rows.filter((r) => r.status === "In Development").length,
     wms: rows.filter((r) => r.category === "WMS").length,
-    byCategory: ["Application", "WMS", "Automation", "Dashboard", "Report"].map(
-      (c) => ({
-        category: c,
-        count: rows.filter((r) => r.category === c).length,
-      })
-    ),
+    byCategory: ["Application","WMS","Automation","Dashboard","Report"].map((c) => ({
+      category: c,
+      count: rows.filter((r) => r.category === c).length,
+    })),
     recentAudit: audit || [],
   };
 }
