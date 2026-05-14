@@ -4,7 +4,7 @@ import { supabase } from "./supabaseClient";
 export async function signInWithGoogle() {
   const { error } = await supabase.auth.signInWithOAuth({
     provider: "google",
-    options: { redirectTo: window.location.origin },
+    options: { redirectTo: "https://system-matrix-approval.vercel.app" },
   });
   if (error) throw error;
 }
