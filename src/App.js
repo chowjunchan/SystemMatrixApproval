@@ -560,7 +560,7 @@ function ImportModal({onClose,onImport,user}){
     setFile(f);
     const reader=new FileReader();
     reader.onload=e=>{setPreview(parseCSV(e.target.result).slice(0,5));};
-    reader.readAsText(f);
+    reader.readAsText(file);
   }
 
   async function handleImport(){
@@ -605,7 +605,7 @@ function ImportModal({onClose,onImport,user}){
       }
       setDone(count);setImporting(false);onImport(count);
     };
-    reader.readAsText(f);
+    reader.readAsText(file);
   }
 
   return(
