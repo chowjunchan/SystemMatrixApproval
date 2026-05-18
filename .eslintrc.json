@@ -1,1 +1,2 @@
 {"extends": ["react-app"]}
+echo '{"extends":["react-app"],"rules":{"no-unused-vars":"warn"}}' > .eslintrc.json
