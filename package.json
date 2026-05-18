@@ -9,9 +9,8 @@
     "react-scripts": "5.0.1"
   },
   "scripts": {
-    "start": "vite",
-    "build": "vite build"
-  }
+    "start": "react-scripts start",
+    "build": "react-scripts build"
   },
   "browserslist": {
     "production": [">0.2%", "not dead", "not op_mini all"],
