@@ -4381,14 +4381,128 @@ export default function App() {
     );
 
   const isAdmin = profile.role === "Admin";
-  const TABS = [
-    { id: "dashboard", label: "Dashboard", icon: "📊" },
-    { id: "requests", label: "System Requests", icon: "📋" },
-    { id: "sourcing", label: "Sourcing", icon: "📦" },
-    { id: "users", label: "Users", icon: "👥", admin: true },
-    { id: "audit", label: "Audit Log", icon: "🕵️", admin: true },
-  ];
-  const myTabs = TABS.filter((t) => !t.admin || isAdmin);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [expanded, setExpanded] = useState({
+    requests: true,
+    sourcing: false,
+    admin: false,
+  });
+  const toggle = (k) => setExpanded((e) => ({ ...e, [k]: !e[k] }));
+
+  function navigate(t) {
+    setTab(t);
+    setSidebarOpen(false);
+  }
+  function navRequest(filter) {
+    setDashFilter(filter);
+    setTab("requests");
+    setSidebarOpen(false);
+  }
+
+  const pendingCount = requests.filter((r) =>
+    r.status?.startsWith("Pending")
+  ).length;
+  const approvedCount = requests.filter((r) => r.status === "Approved").length;
+  const inDevCount = requests.filter((r) =>
+    ["Timeline Set", "In Development", "Testing", "UAT"].includes(r.status)
+  ).length;
+
+  // Sidebar nav item
+  const NavItem = ({ icon, label, id, badge, indent }) => (
+    <button
+      onClick={() => navigate(id)}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        width: "100%",
+        padding: indent ? "8px 16px 8px 32px" : "9px 16px",
+        background: tab === id ? "#0EA5E920" : "transparent",
+        border: "none",
+        borderLeft: "2px solid " + (tab === id ? "#0EA5E9" : "transparent"),
+        cursor: "pointer",
+        fontFamily: "inherit",
+        textAlign: "left",
+        transition: "all .15s",
+      }}
+    >
+      <span style={{ fontSize: indent ? 13 : 15 }}>{icon}</span>
+      <span
+        style={{
+          fontSize: 12,
+          fontWeight: tab === id ? 700 : 500,
+          color: tab === id ? "#E2E8F0" : "#94A3B8",
+          flex: 1,
+        }}
+      >
+        {label}
+      </span>
+      {badge > 0 && (
+        <span
+          style={{
+            fontSize: 9,
+            fontWeight: 800,
+            padding: "2px 6px",
+            borderRadius: 10,
+            background: "#FBBF2430",
+            color: "#FBBF24",
+          }}
+        >
+          {badge}
+        </span>
+      )}
+    </button>
+  );
+
+  const SectionHeader = ({ icon, label, skey, badge }) => (
+    <button
+      onClick={() => toggle(skey)}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        width: "100%",
+        padding: "10px 16px",
+        background: "transparent",
+        border: "none",
+        cursor: "pointer",
+        fontFamily: "inherit",
+        textAlign: "left",
+      }}
+    >
+      <span style={{ fontSize: 14 }}>{icon}</span>
+      <span
+        style={{
+          fontSize: 11,
+          fontWeight: 700,
+          color: "#64748B",
+          flex: 1,
+          textTransform: "uppercase",
+          letterSpacing: 0.8,
+        }}
+      >
+        {label}
+      </span>
+      {badge > 0 && (
+        <span
+          style={{
+            fontSize: 9,
+            fontWeight: 800,
+            padding: "2px 6px",
+            borderRadius: 10,
+            background: "#FBBF2430",
+            color: "#FBBF24",
+            marginRight: 4,
+          }}
+        >
+          {badge}
+        </span>
+      )}
+      <span style={{ fontSize: 10, color: "#334155" }}>
+        {expanded[skey] ? "▲" : "▼"}
+      </span>
+    </button>
+  );
 
   return (
     <div
@@ -4401,6 +4515,7 @@ export default function App() {
         flexDirection: "column",
       }}
     >
+      {/* TOAST */}
       {toast && (
         <div
           style={{
@@ -4423,37 +4538,432 @@ export default function App() {
         </div>
       )}
 
+      {/* SIDEBAR OVERLAY */}
+      {sidebarOpen && (
+        <div
+          style={{ position: "fixed", inset: 0, zIndex: 100, display: "flex" }}
+        >
+          {/* Backdrop */}
+          <div
+            onClick={() => setSidebarOpen(false)}
+            style={{
+              position: "absolute",
+              inset: 0,
+              background: "#00000070",
+              backdropFilter: "blur(2px)",
+            }}
+          />
+          {/* Sidebar panel */}
+          <div
+            style={{
+              position: "relative",
+              width: 260,
+              background: "#0A0F1A",
+              borderRight: "1px solid #1E293B",
+              display: "flex",
+              flexDirection: "column",
+              height: "100%",
+              overflowY: "auto",
+              zIndex: 1,
+              animation: "slideIn .2s ease",
+            }}
+          >
+            <style>{`@keyframes slideIn{from{transform:translateX(-100%)}to{transform:translateX(0)}}`}</style>
+
+            {/* Sidebar header */}
+            <div
+              style={{
+                padding: "16px",
+                borderBottom: "1px solid #1E293B",
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+              }}
+            >
+              <div
+                style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: 8,
+                  background: "linear-gradient(135deg,#0EA5E9,#8B5CF6)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: 16,
+                }}
+              >
+                🏭
+              </div>
+              <div>
+                <div
+                  style={{
+                    fontSize: 12,
+                    fontWeight: 800,
+                    color: "#E2E8F0",
+                    lineHeight: 1,
+                  }}
+                >
+                  System & Digital
+                </div>
+                <div
+                  style={{ fontSize: 9, color: "#475569", letterSpacing: 1 }}
+                >
+                  Optimization
+                </div>
+              </div>
+              <button
+                onClick={() => setSidebarOpen(false)}
+                style={{
+                  marginLeft: "auto",
+                  background: "transparent",
+                  border: "none",
+                  color: "#475569",
+                  fontSize: 20,
+                  cursor: "pointer",
+                  lineHeight: 1,
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            {/* User info */}
+            <div
+              style={{
+                padding: "12px 16px",
+                borderBottom: "1px solid #1E293B",
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+              }}
+            >
+              <div
+                style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: "50%",
+                  background: ROL_C[profile.role] || "#475569",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: 12,
+                  fontWeight: 800,
+                  color: "#fff",
+                  flexShrink: 0,
+                }}
+              >
+                {profile.name
+                  ?.split(" ")
+                  .map((n) => n[0])
+                  .slice(0, 2)
+                  .join("") || "?"}
+              </div>
+              <div>
+                <div
+                  style={{ fontSize: 12, fontWeight: 700, color: "#CBD5E1" }}
+                >
+                  {profile.name}
+                </div>
+                <div
+                  style={{
+                    fontSize: 10,
+                    color: ROL_C[profile.role] || "#64748B",
+                    fontWeight: 600,
+                  }}
+                >
+                  {profile.role}
+                </div>
+              </div>
+            </div>
+
+            {/* Nav items */}
+            <div style={{ flex: 1, paddingTop: 8 }}>
+              {/* Dashboard */}
+              <NavItem icon="📊" label="Dashboard" id="dashboard" />
+
+              <div
+                style={{ height: 1, background: "#1E293B", margin: "8px 0" }}
+              />
+
+              {/* System Requests section */}
+              <SectionHeader
+                icon="📋"
+                label="System Requests"
+                skey="requests"
+                badge={pendingCount}
+              />
+              {expanded.requests && (
+                <div>
+                  <NavItem
+                    icon="📄"
+                    label="All Requests"
+                    id="requests"
+                    indent
+                  />
+                  <button
+                    onClick={() => navRequest({ status: "Pending" })}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 10,
+                      width: "100%",
+                      padding: "7px 16px 7px 32px",
+                      background: "transparent",
+                      border: "none",
+                      borderLeft: "2px solid transparent",
+                      cursor: "pointer",
+                      fontFamily: "inherit",
+                      textAlign: "left",
+                    }}
+                  >
+                    <span style={{ fontSize: 13 }}>⏳</span>
+                    <span style={{ fontSize: 12, color: "#94A3B8", flex: 1 }}>
+                      Pending
+                    </span>
+                    {pendingCount > 0 && (
+                      <span
+                        style={{
+                          fontSize: 9,
+                          fontWeight: 800,
+                          padding: "2px 6px",
+                          borderRadius: 10,
+                          background: "#FBBF2430",
+                          color: "#FBBF24",
+                        }}
+                      >
+                        {pendingCount}
+                      </span>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => navRequest({ status: "Approved" })}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 10,
+                      width: "100%",
+                      padding: "7px 16px 7px 32px",
+                      background: "transparent",
+                      border: "none",
+                      borderLeft: "2px solid transparent",
+                      cursor: "pointer",
+                      fontFamily: "inherit",
+                      textAlign: "left",
+                    }}
+                  >
+                    <span style={{ fontSize: 13 }}>✅</span>
+                    <span style={{ fontSize: 12, color: "#94A3B8", flex: 1 }}>
+                      Approved
+                    </span>
+                    {approvedCount > 0 && (
+                      <span
+                        style={{
+                          fontSize: 9,
+                          fontWeight: 800,
+                          padding: "2px 6px",
+                          borderRadius: 10,
+                          background: "#34D39930",
+                          color: "#34D399",
+                        }}
+                      >
+                        {approvedCount}
+                      </span>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => navRequest({ status: "In Development" })}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 10,
+                      width: "100%",
+                      padding: "7px 16px 7px 32px",
+                      background: "transparent",
+                      border: "none",
+                      borderLeft: "2px solid transparent",
+                      cursor: "pointer",
+                      fontFamily: "inherit",
+                      textAlign: "left",
+                    }}
+                  >
+                    <span style={{ fontSize: 13 }}>🔨</span>
+                    <span style={{ fontSize: 12, color: "#94A3B8", flex: 1 }}>
+                      In Development
+                    </span>
+                    {inDevCount > 0 && (
+                      <span
+                        style={{
+                          fontSize: 9,
+                          fontWeight: 800,
+                          padding: "2px 6px",
+                          borderRadius: 10,
+                          background: "#38BDF830",
+                          color: "#38BDF8",
+                        }}
+                      >
+                        {inDevCount}
+                      </span>
+                    )}
+                  </button>
+                </div>
+              )}
+
+              <div
+                style={{ height: 1, background: "#1E293B", margin: "8px 0" }}
+              />
+
+              {/* Sourcing section */}
+              <SectionHeader icon="📦" label="Sourcing" skey="sourcing" />
+              {expanded.sourcing && (
+                <div>
+                  <NavItem icon="🌍" label="By Country" id="sourcing" indent />
+                  <button
+                    onClick={() => navigate("sourcing")}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 10,
+                      width: "100%",
+                      padding: "7px 16px 7px 32px",
+                      background: "transparent",
+                      border: "none",
+                      borderLeft: "2px solid transparent",
+                      cursor: "pointer",
+                      fontFamily: "inherit",
+                      textAlign: "left",
+                    }}
+                  >
+                    <span style={{ fontSize: 13 }}>📊</span>
+                    <span style={{ fontSize: 12, color: "#94A3B8", flex: 1 }}>
+                      Compare All
+                    </span>
+                  </button>
+                </div>
+              )}
+
+              {/* Admin section */}
+              {isAdmin && (
+                <>
+                  <div
+                    style={{
+                      height: 1,
+                      background: "#1E293B",
+                      margin: "8px 0",
+                    }}
+                  />
+                  <SectionHeader icon="🔑" label="Admin" skey="admin" />
+                  {expanded.admin && (
+                    <div>
+                      <NavItem
+                        icon="👥"
+                        label="User Management"
+                        id="users"
+                        indent
+                      />
+                      <NavItem icon="🕵️" label="Audit Log" id="audit" indent />
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+
+            {/* Sign out */}
+            <div
+              style={{ padding: "12px 16px", borderTop: "1px solid #1E293B" }}
+            >
+              <button
+                onClick={() => supabase.auth.signOut()}
+                style={{
+                  width: "100%",
+                  padding: "9px",
+                  borderRadius: 8,
+                  background: "transparent",
+                  border: "1px solid #334155",
+                  color: "#64748B",
+                  fontSize: 12,
+                  cursor: "pointer",
+                  fontFamily: "inherit",
+                  fontWeight: 600,
+                }}
+              >
+                Sign Out
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TOP BAR */}
       <div
         style={{
           background: "#0A0F1A",
           borderBottom: "1px solid #1E293B",
-          padding: "0 24px",
+          padding: "0 20px",
           display: "flex",
           alignItems: "center",
           position: "sticky",
           top: 0,
           zIndex: 50,
           height: 52,
+          gap: 12,
         }}
       >
-        <div
+        {/* Hamburger */}
+        <button
+          onClick={() => setSidebarOpen(true)}
           style={{
+            width: 36,
+            height: 36,
+            borderRadius: 8,
+            background: "#1E293B",
+            border: "1px solid #334155",
+            cursor: "pointer",
             display: "flex",
+            flexDirection: "column",
             alignItems: "center",
-            gap: 10,
-            marginRight: 32,
+            justifyContent: "center",
+            gap: 4,
+            flexShrink: 0,
           }}
         >
           <div
             style={{
-              width: 34,
-              height: 34,
-              borderRadius: 10,
+              width: 16,
+              height: 2,
+              background: "#94A3B8",
+              borderRadius: 1,
+            }}
+          />
+          <div
+            style={{
+              width: 16,
+              height: 2,
+              background: "#94A3B8",
+              borderRadius: 1,
+            }}
+          />
+          <div
+            style={{
+              width: 16,
+              height: 2,
+              background: "#94A3B8",
+              borderRadius: 1,
+            }}
+          />
+        </button>
+
+        {/* Logo */}
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div
+            style={{
+              width: 30,
+              height: 30,
+              borderRadius: 8,
               background: "linear-gradient(135deg,#0EA5E9,#8B5CF6)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              fontSize: 17,
+              fontSize: 15,
             }}
           >
             🏭
@@ -4461,7 +4971,7 @@ export default function App() {
           <div>
             <div
               style={{
-                fontSize: 13,
+                fontSize: 12,
                 fontWeight: 800,
                 color: "#E2E8F0",
                 lineHeight: 1,
@@ -4469,98 +4979,102 @@ export default function App() {
             >
               System & Digital Optimization
             </div>
-            <div style={{ fontSize: 9, color: "#475569", letterSpacing: 1.5 }}>
+            <div style={{ fontSize: 9, color: "#475569", letterSpacing: 1.2 }}>
               SPO · GCE · WSI · SDO
             </div>
           </div>
         </div>
-        <div style={{ display: "flex", flex: 1 }}>
-          {myTabs.map((t) => (
-            <button
-              key={t.id}
-              onClick={() => setTab(t.id)}
+
+        {/* Current page indicator */}
+        <div style={{ marginLeft: 8, fontSize: 12, color: "#475569" }}>
+          <span style={{ color: "#334155" }}>/</span>{" "}
+          <span style={{ color: "#94A3B8", fontWeight: 600 }}>
+            {tab === "dashboard"
+              ? "Dashboard"
+              : tab === "requests"
+              ? "System Requests"
+              : tab === "sourcing"
+              ? "Sourcing"
+              : tab === "users"
+              ? "Users"
+              : "Audit Log"}
+          </span>
+        </div>
+
+        {/* Right side */}
+        <div
+          style={{
+            marginLeft: "auto",
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+          }}
+        >
+          {pendingCount > 0 && (
+            <div
               style={{
-                padding: "0 14px",
-                height: 52,
-                background: "transparent",
-                border: "none",
-                borderBottom:
-                  "2px solid " + (tab === t.id ? "#0EA5E9" : "transparent"),
-                color: tab === t.id ? "#0EA5E9" : "#64748B",
+                fontSize: 11,
+                padding: "4px 10px",
+                borderRadius: 20,
+                background: "#FBBF2420",
+                color: "#FBBF24",
                 fontWeight: 700,
-                fontSize: 12,
-                cursor: "pointer",
-                fontFamily: "inherit",
-                display: "flex",
-                alignItems: "center",
-                gap: 5,
+                border: "1px solid #FBBF2440",
               }}
             >
-              {t.icon} {t.label}
-              {t.admin && (
-                <span
-                  style={{
-                    fontSize: 9,
-                    background: "#F59E0B22",
-                    color: "#F59E0B",
-                    padding: "1px 5px",
-                    borderRadius: 4,
-                    fontWeight: 700,
-                  }}
-                >
-                  ADMIN
-                </span>
-              )}
-            </button>
-          ))}
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <div style={{ textAlign: "right" }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: "#CBD5E1" }}>
-              {profile.name}
+              ⏳ {pendingCount} pending
             </div>
+          )}
+          {isAdmin && (
             <div
               style={{
                 fontSize: 9,
+                padding: "3px 8px",
+                borderRadius: 6,
+                background: "linear-gradient(90deg,#0EA5E9,#8B5CF6)",
+                color: "#fff",
                 fontWeight: 700,
-                color: ROL_C[profile.role] || "#64748B",
               }}
             >
-              {profile.role}
+              ADMIN
             </div>
-          </div>
-          <button
-            onClick={() => supabase.auth.signOut()}
+          )}
+          <div
             style={{
-              padding: "6px 12px",
-              borderRadius: 7,
-              background: "transparent",
-              border: "1px solid #334155",
-              color: "#64748B",
-              fontSize: 11,
-              cursor: "pointer",
-              fontFamily: "inherit",
+              fontSize: 12,
+              fontWeight: 700,
+              color: "#CBD5E1",
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
             }}
           >
-            Sign Out
-          </button>
+            <div
+              style={{
+                width: 24,
+                height: 24,
+                borderRadius: "50%",
+                background: ROL_C[profile.role] || "#475569",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 10,
+                fontWeight: 800,
+                color: "#fff",
+              }}
+            >
+              {profile.name
+                ?.split(" ")
+                .map((n) => n[0])
+                .slice(0, 2)
+                .join("") || "?"}
+            </div>
+            {profile.name?.split(" ")[0]}
+          </div>
         </div>
       </div>
 
-      {isAdmin && (
-        <div
-          style={{
-            background: "linear-gradient(90deg,#0EA5E9,#8B5CF6)",
-            padding: "5px 24px",
-            fontSize: 11,
-            fontWeight: 700,
-            color: "#fff",
-          }}
-        >
-          🔑 ADMIN MODE — Full access · Import · Export · Override
-        </div>
-      )}
-
+      {/* CONTENT */}
       <div
         style={{
           flex: 1,
@@ -4583,10 +5097,10 @@ export default function App() {
             initialFilter={dashFilter}
           />
         )}
+        {tab === "sourcing" && <Sourcing />}
         {tab === "users" && isAdmin && (
           <Users users={users} setUsers={setUsers} showToast={showToast} />
         )}
-        {tab === "sourcing" && <Sourcing />}
         {tab === "audit" && isAdmin && <AuditLog />}
       </div>
 
@@ -4604,10 +5118,7 @@ export default function App() {
           System & Digital Optimization · {profile.role} · {requests.length}{" "}
           requests
         </span>
-        <span>
-          {requests.filter((r) => r.status?.startsWith("Pending")).length}{" "}
-          pending approval
-        </span>
+        <span>{pendingCount} pending approval</span>
       </div>
     </div>
   );
