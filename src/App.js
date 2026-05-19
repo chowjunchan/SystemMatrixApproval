@@ -4155,6 +4155,12 @@ export default function App() {
   const [tab, setTab] = useState("dashboard");
   const [toast, setToast] = useState(null);
   const [dashFilter, setDashFilter] = useState({});
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [expanded, setExpanded] = useState({
+    requests: true,
+    sourcing: false,
+    admin: false,
+  });
 
   function showToast(msg, color = "green") {
     setToast({ msg, color });
@@ -4381,12 +4387,6 @@ export default function App() {
     );
 
   const isAdmin = profile.role === "Admin";
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [expanded, setExpanded] = useState({
-    requests: true,
-    sourcing: false,
-    admin: false,
-  });
   const toggle = (k) => setExpanded((e) => ({ ...e, [k]: !e[k] }));
 
   function navigate(t) {
