@@ -6,6 +6,7 @@ export async function signInWithGoogle() {
     provider: "google",
     options: {
       redirectTo: "https://system-matrix-approval.vercel.app",
+      queryParams: { hd: "mrdiy.com" },
     },
   });
   if (error) throw error;
@@ -81,9 +82,11 @@ export async function deleteRequest(id) {
 }
 
 export async function addAudit(requestId, action, performedBy, detail) {
-  await supabase.from("audit_log").insert([
-    { request_id: requestId, action, performed_by: performedBy, detail },
-  ]);
+  await supabase
+    .from("audit_log")
+    .insert([
+      { request_id: requestId, action, performed_by: performedBy, detail },
+    ]);
 }
 
 export async function getAuditLog() {
@@ -114,10 +117,12 @@ export async function getDashboardStats() {
     rejected: rows.filter((r) => r.status === "Rejected").length,
     inDev: rows.filter((r) => r.status === "In Development").length,
     wms: rows.filter((r) => r.category === "WMS").length,
-    byCategory: ["Application","WMS","Automation","Dashboard","Report"].map((c) => ({
-      category: c,
-      count: rows.filter((r) => r.category === c).length,
-    })),
+    byCategory: ["Application", "WMS", "Automation", "Dashboard", "Report"].map(
+      (c) => ({
+        category: c,
+        count: rows.filter((r) => r.category === c).length,
+      })
+    ),
     recentAudit: audit || [],
   };
 }
